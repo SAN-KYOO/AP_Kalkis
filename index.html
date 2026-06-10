@@ -389,7 +389,7 @@
 
 <div class="layout">
   <div id="commanderList"></div>
-  <button class="add-btn" id="addBtn" onclick="addCommander()">+ Legg til kommandant</button>
+  <button class="add-btn" id="addBtn" onclick="addCommander()">+ Legg til kommandør</button>
   <div class="result-panel" id="resultPanel" style="display:none">
     <p class="result-label">Totale action points brukt</p>
     <div class="result-number" id="resultNumber">–</div>
@@ -399,15 +399,14 @@
 </div>
 
 <script>
-  const BASE      = 50;
-  const STEP      = 2;
-  const CAP       = 10;
-  const INSIGHT   = 10;
-  const MAX       = 5;
+  const BASE    = 50;
+  const STEP    = 2;
+  const CAP     = 10;
+  const INSIGHT = 10;
+  const MAX     = 5;
 
-  // State
   let sharedBarbars = 1;
-  let commanders    = []; // [{ id, insight }]
+  let commanders    = [];
   let nextId        = 0;
 
   function calcRows(insight) {
@@ -424,12 +423,25 @@
     return calcRows(insight).reduce((s, r) => s + r.cost, 0);
   }
 
-  /* ── Full render (structure changes: add/remove commander) ── */
+  function buildRowsHTML(rows, insight) {
+    return rows.map(function(r) {
+      const parts = [];
+      if (r.chain > 0) parts.push('−' + r.chain + ' kjede');
+      if (insight)     parts.push('−' + INSIGHT + ' Insight');
+      const detail = parts.length ? parts.join(', ') : 'ingen reduksjon';
+      return '<div class="barbar-row">' +
+        '<span class="br-label">Barbar #' + r.n + '</span>' +
+        '<span class="br-detail">' + detail + '</span>' +
+        '<span class="br-cost">' + r.cost + ' AP</span>' +
+        '</div>';
+    }).join('');
+  }
+
   function render() {
     const list = document.getElementById('commanderList');
     list.innerHTML = '';
 
-    commanders.forEach((cmd, idx) => {
+    commanders.forEach(function(cmd, idx) {
       const rows  = calcRows(cmd.insight);
       const total = rows.reduce((s, r) => s + r.cost, 0);
 
@@ -437,22 +449,19 @@
       card.className = 'commander-card';
       card.id = 'card-' + cmd.id;
 
-      // Header
       const hdr = document.createElement('div');
       hdr.className = 'commander-header';
       hdr.innerHTML =
-        '<span class="commander-title">Kommandant ' + (idx + 1) + '</span>' +
+        '<span class="commander-title">Kommandør ' + (idx + 1) + '</span>' +
         '<div style="display:flex;align-items:center;gap:10px;">' +
           '<span class="commander-ap-badge" id="badge-' + cmd.id + '">' + total + ' AP</span>' +
           '<button class="remove-btn" onclick="removeCommander(' + cmd.id + ')">✕</button>' +
         '</div>';
       card.appendChild(hdr);
 
-      // Body
       const body = document.createElement('div');
       body.className = 'commander-body';
 
-      // Barbar count: input for first, text for rest
       if (idx === 0) {
         body.innerHTML +=
           '<div class="field">' +
@@ -467,7 +476,6 @@
           '</div>';
       }
 
-      // Insight toggle
       body.innerHTML +=
         '<div class="talent-toggle' + (cmd.insight ? ' active' : '') + '" id="toggle-' + cmd.id + '" onclick="toggleInsight(' + cmd.id + ')">' +
           '<div class="toggle-box"><span class="toggle-check">✓</span></div>' +
@@ -478,20 +486,19 @@
           '<div class="toggle-badge">−10 AP</div>' +
         '</div>';
 
-      // Per-barbar breakdown
-      body.innerHTML += '<div class="barbar-breakdown">' +
-        '<button class="breakdown-toggle" onclick="toggleBreakdown(' + cmd.id + ')" type="button">' +
-          'AP per barbar bekjempet' +
-          '<span class="breakdown-arrow" id="arrow-' + cmd.id + '">▼</span>' +
-        '</button>' +
-        '<div class="breakdown-body" id="rows-' + cmd.id + '">' + buildRowsHTML(rows, cmd.insight) + '</div>' +
+      body.innerHTML +=
+        '<div class="barbar-breakdown">' +
+          '<button class="breakdown-toggle" onclick="toggleBreakdown(' + cmd.id + ')" type="button">' +
+            'AP per barbar bekjempet' +
+            '<span class="breakdown-arrow" id="arrow-' + cmd.id + '">▼</span>' +
+          '</button>' +
+          '<div class="breakdown-body" id="rows-' + cmd.id + '">' + buildRowsHTML(rows, cmd.insight) + '</div>' +
         '</div>';
 
       card.appendChild(body);
       list.appendChild(card);
     });
 
-    // Attach input listener AFTER rendering (so element exists)
     const inp = document.getElementById('barbarInput');
     if (inp) {
       inp.addEventListener('input', function() {
@@ -507,37 +514,19 @@
     updateResult();
   }
 
-  function buildRowsHTML(rows, insight) {
-    return rows.map(function(r) {
-      const parts = [];
-      if (r.chain > 0) parts.push('−' + r.chain + ' kjede');
-      if (insight)     parts.push('−' + INSIGHT + ' Insight');
-      const detail = parts.length ? parts.join(', ') : 'ingen reduksjon';
-      return '<div class="barbar-row">' +
-        '<span class="br-label">Barbar #' + r.n + '</span>' +
-        '<span class="br-detail">' + detail + '</span>' +
-        '<span class="br-cost">' + r.cost + ' AP</span>' +
-        '</div>';
-    }).join('');
-  }
-
-  /* ── Lightweight update (barbar count or insight changed) ── */
   function updateDynamic() {
     commanders.forEach(function(cmd, idx) {
       const rows  = calcRows(cmd.insight);
       const total = rows.reduce((s, r) => s + r.cost, 0);
 
-      // Badge
       const badge = document.getElementById('badge-' + cmd.id);
       if (badge) badge.textContent = total + ' AP';
 
-      // Barbar text (non-first)
       if (idx > 0) {
         const t = document.getElementById('barbar-text-' + cmd.id);
         if (t) t.textContent = sharedBarbars;
       }
 
-      // Rows
       const rowsEl = document.getElementById('rows-' + cmd.id);
       if (rowsEl) rowsEl.innerHTML = buildRowsHTML(rows, cmd.insight);
     });
@@ -555,17 +544,16 @@
     el.style.transform = 'scale(1.07)';
     setTimeout(function() { el.style.transform = 'scale(1)'; }, 200);
 
-    // Summary
     if (!commanders.length) { document.getElementById('summaryWrap').innerHTML = ''; return; }
 
     let html = '<table class="summary-table"><thead><tr>' +
-      '<th>Kommandant</th><th>Barbarer</th><th>Insight</th><th>AP</th>' +
+      '<th>Kommandør</th><th>Barbarer</th><th>Insight</th><th>AP</th>' +
       '</tr></thead><tbody>';
 
     commanders.forEach(function(cmd, idx) {
       const ap = totalAP(cmd.insight);
       html += '<tr>' +
-        '<td>Kommandant ' + (idx + 1) + '</td>' +
+        '<td>Kommandør ' + (idx + 1) + '</td>' +
         '<td>' + sharedBarbars + '</td>' +
         '<td>' + (cmd.insight ? '<span class="check">✓</span>' : '<span class="cross">✕</span>') + '</td>' +
         '<td>' + ap + '</td>' +
@@ -584,8 +572,8 @@
     const btn = document.getElementById('addBtn');
     btn.disabled = commanders.length >= MAX;
     btn.textContent = commanders.length >= MAX
-      ? 'Maks antall kommandanter nådd (5)'
-      : '+ Legg til kommandant';
+      ? 'Maks antall kommandører nådd (5)'
+      : '+ Legg til kommandør';
   }
 
   function toggleBreakdown(id) {
@@ -615,7 +603,6 @@
     updateDynamic();
   }
 
-  // Init
   addCommander();
 </script>
 </body>
