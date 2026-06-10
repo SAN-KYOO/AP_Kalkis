@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="no">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AP Kalkulator – Barbarkamp</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Crimson+Pro:ital,wght@0,300;0,400;0,600;1,300&display=swap');
+
+  :root {
+    --bg:       #0e0b07;
+    --surface:  #1a1510;
+    --border:   #3a2e1e;
+    --gold:     #c9933a;
+    --gold-dim: #7a5a22;
+    --red:      #8b2020;
+    --green:    #6aaa6a;
+    --text:     #e8d8b8;
+    --muted:    #8a7a5a;
+    --radius:   4px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 18px;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 48px 16px 80px;
+  }
+
+  header { text-align: center; margin-bottom: 48px; }
+
+  .eyebrow {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.25em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+
+  h1 {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(28px, 6vw, 52px);
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1.1;
+    text-shadow: 0 0 40px rgba(201,147,58,0.3);
+  }
+
+  .divider {
+    width: 80px; height: 1px;
+    background: var(--gold-dim);
+    margin: 16px auto 0;
+    position: relative;
+  }
+  .divider::before, .divider::after {
+    content: '';
+    position: absolute;
+    top: -3px;
+    width: 6px; height: 6px;
+    border: 1px solid var(--gold-dim);
+    transform: rotate(45deg);
+    background: var(--bg);
+  }
+  .divider::before { left: -3px; }
+  .divider::after  { right: -3px; }
+
+  .layout {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    width: 100%;
+    max-width: 760px;
+  }
+
+  #commanderList { display: flex; flex-direction: column; gap: 14px; }
+
+  .commander-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    overflow: hidden;
+  }
+
+  .commander-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(0,0,0,0.2);
+  }
+
+  .commander-title {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+    color: var(--gold);
+  }
+
+  .commander-ap-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    color: var(--gold);
+    background: rgba(201,147,58,0.1);
+    border: 1px solid var(--gold-dim);
+    border-radius: 3px;
+    padding: 2px 10px;
+    margin-right: 10px;
+  }
+
+  .remove-btn {
+    background: none;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-size: 15px;
+    padding: 4px 6px;
+    border-radius: 3px;
+    transition: color 0.15s;
+  }
+  .remove-btn:hover { color: var(--red); }
+
+  .commander-body {
+    padding: 18px 20px;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px 24px;
+  }
+
+  @media (max-width: 500px) {
+    .commander-body { grid-template-columns: 1fr; }
+  }
+
+  .field { display: flex; flex-direction: column; gap: 6px; }
+
+  label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.1em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--muted);
+    opacity: 0.65;
+    font-style: italic;
+    font-family: 'Crimson Pro', serif;
+  }
+
+  input[type="number"] {
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    color: var(--text);
+    font-family: 'Crimson Pro', serif;
+    font-size: 20px;
+    padding: 9px 14px;
+    outline: none;
+    transition: border-color 0.15s;
+    width: 100%;
+    appearance: textfield;
+    -moz-appearance: textfield;
+  }
+  input[type="number"]::-webkit-outer-spin-button,
+  input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; }
+  input[type="number"]:focus { border-color: var(--gold-dim); }
+
+  .barbar-info {
+    font-family: 'Cinzel', serif;
+    font-size: 12px;
+    letter-spacing: 0.06em;
+    color: var(--muted);
+    padding: 9px 0;
+  }
+  .barbar-info span { color: var(--text); }
+
+  .talent-toggle {
+    grid-column: 1 / -1;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    cursor: pointer;
+    user-select: none;
+    transition: border-color 0.15s, background 0.15s;
+  }
+  .talent-toggle:hover { border-color: var(--gold-dim); }
+  .talent-toggle.active { border-color: var(--gold-dim); background: #1a1208; }
+
+  .toggle-box {
+    width: 18px; height: 18px;
+    border: 1px solid var(--border);
+    border-radius: 3px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    transition: background 0.15s, border-color 0.15s;
+  }
+  .talent-toggle.active .toggle-box { background: var(--gold-dim); border-color: var(--gold); }
+  .toggle-check { color: var(--bg); font-size: 11px; font-weight: bold; }
+  .toggle-info { flex: 1; }
+  .toggle-name { font-family: 'Cinzel', serif; font-size: 12px; letter-spacing: 0.08em; color: var(--text); }
+  .toggle-desc { font-size: 13px; color: var(--muted); font-style: italic; font-family: 'Crimson Pro', serif; }
+  .toggle-badge {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    color: var(--green);
+    background: rgba(106,170,106,0.1);
+    border: 1px solid rgba(106,170,106,0.3);
+    border-radius: 3px;
+    padding: 2px 7px;
+  }
+
+  .barbar-breakdown {
+    grid-column: 1 / -1;
+    border-top: 1px solid var(--border);
+    padding-top: 0;
+  }
+
+  .breakdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 14px 0;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    color: var(--muted);
+    text-transform: uppercase;
+    text-align: left;
+    transition: color 0.15s;
+  }
+  .breakdown-toggle:hover { color: var(--text); }
+
+  .breakdown-arrow {
+    font-size: 10px;
+    transition: transform 0.2s ease;
+    color: var(--muted);
+  }
+  .breakdown-arrow.open { transform: rotate(180deg); }
+
+  .breakdown-body {
+    display: none;
+    padding-bottom: 4px;
+  }
+  .breakdown-body.open { display: block; }
+
+  .barbar-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.04em;
+    padding: 5px 10px;
+    background: rgba(0,0,0,0.2);
+    border-radius: 3px;
+    margin-bottom: 4px;
+  }
+  .barbar-row:last-child { margin-bottom: 0; }
+  .br-label { color: var(--muted); }
+  .br-detail { color: var(--muted); font-size: 11px; }
+  .br-cost { color: var(--gold); }
+
+  .add-btn {
+    background: none;
+    border: 1px dashed var(--border);
+    border-radius: var(--radius);
+    color: var(--muted);
+    cursor: pointer;
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.15em;
+    padding: 14px;
+    text-transform: uppercase;
+    width: 100%;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .add-btn:hover:not(:disabled) { border-color: var(--gold-dim); color: var(--gold); }
+  .add-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+
+  .result-panel {
+    background: linear-gradient(135deg, #1a1208 0%, #0e0b07 100%);
+    border: 1px solid var(--gold-dim);
+    border-radius: var(--radius);
+    padding: 32px 24px;
+    text-align: center;
+    position: relative;
+    overflow: hidden;
+  }
+  .result-panel::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse at 50% 0%, rgba(201,147,58,0.08) 0%, transparent 65%);
+    pointer-events: none;
+  }
+
+  .result-label {
+    font-family: 'Cinzel', serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    color: var(--gold-dim);
+    text-transform: uppercase;
+    margin-bottom: 12px;
+  }
+
+  .result-number {
+    font-family: 'Cinzel', serif;
+    font-size: clamp(56px, 12vw, 96px);
+    font-weight: 900;
+    color: var(--gold);
+    line-height: 1;
+    text-shadow: 0 0 60px rgba(201,147,58,0.4);
+    transition: transform 0.2s ease;
+  }
+
+  .result-unit {
+    font-family: 'Cinzel', serif;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    color: var(--muted);
+    text-transform: uppercase;
+    margin-top: 8px;
+  }
+
+  .summary-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    font-family: 'Cinzel', serif;
+    letter-spacing: 0.04em;
+    margin-top: 20px;
+    border-top: 1px solid var(--border);
+    text-align: left;
+  }
+  .summary-table th {
+    color: var(--muted);
+    font-weight: 400;
+    font-size: 10px;
+    letter-spacing: 0.12em;
+    padding: 14px 10px 10px;
+    border-bottom: 1px solid var(--border);
+    text-transform: uppercase;
+  }
+  .summary-table td {
+    padding: 10px 10px;
+    border-bottom: 1px solid rgba(58,46,30,0.4);
+    color: var(--text);
+  }
+  .summary-table td:nth-child(2),
+  .summary-table td:nth-child(3),
+  .summary-table th:nth-child(2),
+  .summary-table th:nth-child(3) { text-align: center; }
+  .summary-table td:last-child,
+  .summary-table th:last-child { text-align: right; }
+  .summary-table td:last-child { color: var(--gold); font-size: 16px; }
+  .summary-table tr:last-child td { border-bottom: none; }
+  .total-row td { color: var(--muted) !important; font-size: 11px !important; letter-spacing: 0.12em; border-top: 1px solid var(--border); }
+  .total-row td:last-child { color: var(--gold) !important; font-size: 20px !important; }
+  .check { color: var(--green); }
+  .cross { color: var(--muted); opacity: 0.4; }
+</style>
+</head>
+<body>
+
+<header>
+  <p class="eyebrow">Stridskalkulator</p>
+  <h1>Action Points</h1>
+  <div class="divider"></div>
+</header>
+
+<div class="layout">
+  <div id="commanderList"></div>
+  <button class="add-btn" id="addBtn" onclick="addCommander()">+ Legg til kommandant</button>
+  <div class="result-panel" id="resultPanel" style="display:none">
+    <p class="result-label">Totale action points brukt</p>
+    <div class="result-number" id="resultNumber">–</div>
+    <p class="result-unit">Action Points</p>
+    <div id="summaryWrap"></div>
+  </div>
+</div>
+
+<script>
+  const BASE      = 50;
+  const STEP      = 2;
+  const CAP       = 10;
+  const INSIGHT   = 10;
+  const MAX       = 5;
+
+  // State
+  let sharedBarbars = 1;
+  let commanders    = []; // [{ id, insight }]
+  let nextId        = 0;
+
+  function calcRows(insight) {
+    const base = BASE - (insight ? INSIGHT : 0);
+    const rows = [];
+    for (let i = 0; i < sharedBarbars; i++) {
+      const chain = Math.min(i * STEP, CAP);
+      rows.push({ n: i + 1, chain, cost: Math.max(base - chain, 1) });
+    }
+    return rows;
+  }
+
+  function totalAP(insight) {
+    return calcRows(insight).reduce((s, r) => s + r.cost, 0);
+  }
+
+  /* ── Full render (structure changes: add/remove commander) ── */
+  function render() {
+    const list = document.getElementById('commanderList');
+    list.innerHTML = '';
+
+    commanders.forEach((cmd, idx) => {
+      const rows  = calcRows(cmd.insight);
+      const total = rows.reduce((s, r) => s + r.cost, 0);
+
+      const card = document.createElement('div');
+      card.className = 'commander-card';
+      card.id = 'card-' + cmd.id;
+
+      // Header
+      const hdr = document.createElement('div');
+      hdr.className = 'commander-header';
+      hdr.innerHTML =
+        '<span class="commander-title">Kommandant ' + (idx + 1) + '</span>' +
+        '<div style="display:flex;align-items:center;gap:10px;">' +
+          '<span class="commander-ap-badge" id="badge-' + cmd.id + '">' + total + ' AP</span>' +
+          '<button class="remove-btn" onclick="removeCommander(' + cmd.id + ')">✕</button>' +
+        '</div>';
+      card.appendChild(hdr);
+
+      // Body
+      const body = document.createElement('div');
+      body.className = 'commander-body';
+
+      // Barbar count: input for first, text for rest
+      if (idx === 0) {
+        body.innerHTML +=
+          '<div class="field">' +
+            '<label>Antall barbarer</label>' +
+            '<input type="number" id="barbarInput" value="' + sharedBarbars + '" min="1" max="99">' +
+            '<span class="hint">−2 AP per ny barbar, maks −10</span>' +
+          '</div>';
+      } else {
+        body.innerHTML +=
+          '<div class="field" style="justify-content:center;padding-top:6px;">' +
+            '<span class="barbar-info">Antall barbarer: <span id="barbar-text-' + cmd.id + '">' + sharedBarbars + '</span></span>' +
+          '</div>';
+      }
+
+      // Insight toggle
+      body.innerHTML +=
+        '<div class="talent-toggle' + (cmd.insight ? ' active' : '') + '" id="toggle-' + cmd.id + '" onclick="toggleInsight(' + cmd.id + ')">' +
+          '<div class="toggle-box"><span class="toggle-check">✓</span></div>' +
+          '<div class="toggle-info">' +
+            '<div class="toggle-name">Insight</div>' +
+            '<div class="toggle-desc">Reduserer startkostnaden med 10 AP</div>' +
+          '</div>' +
+          '<div class="toggle-badge">−10 AP</div>' +
+        '</div>';
+
+      // Per-barbar breakdown
+      body.innerHTML += '<div class="barbar-breakdown">' +
+        '<button class="breakdown-toggle" onclick="toggleBreakdown(' + cmd.id + ')" type="button">' +
+          'AP per barbar bekjempet' +
+          '<span class="breakdown-arrow" id="arrow-' + cmd.id + '">▼</span>' +
+        '</button>' +
+        '<div class="breakdown-body" id="rows-' + cmd.id + '">' + buildRowsHTML(rows, cmd.insight) + '</div>' +
+        '</div>';
+
+      card.appendChild(body);
+      list.appendChild(card);
+    });
+
+    // Attach input listener AFTER rendering (so element exists)
+    const inp = document.getElementById('barbarInput');
+    if (inp) {
+      inp.addEventListener('input', function() {
+        const v = parseInt(this.value);
+        if (v && v >= 1) {
+          sharedBarbars = v;
+          updateDynamic();
+        }
+      });
+    }
+
+    updateAddBtn();
+    updateResult();
+  }
+
+  function buildRowsHTML(rows, insight) {
+    return rows.map(function(r) {
+      const parts = [];
+      if (r.chain > 0) parts.push('−' + r.chain + ' kjede');
+      if (insight)     parts.push('−' + INSIGHT + ' Insight');
+      const detail = parts.length ? parts.join(', ') : 'ingen reduksjon';
+      return '<div class="barbar-row">' +
+        '<span class="br-label">Barbar #' + r.n + '</span>' +
+        '<span class="br-detail">' + detail + '</span>' +
+        '<span class="br-cost">' + r.cost + ' AP</span>' +
+        '</div>';
+    }).join('');
+  }
+
+  /* ── Lightweight update (barbar count or insight changed) ── */
+  function updateDynamic() {
+    commanders.forEach(function(cmd, idx) {
+      const rows  = calcRows(cmd.insight);
+      const total = rows.reduce((s, r) => s + r.cost, 0);
+
+      // Badge
+      const badge = document.getElementById('badge-' + cmd.id);
+      if (badge) badge.textContent = total + ' AP';
+
+      // Barbar text (non-first)
+      if (idx > 0) {
+        const t = document.getElementById('barbar-text-' + cmd.id);
+        if (t) t.textContent = sharedBarbars;
+      }
+
+      // Rows
+      const rowsEl = document.getElementById('rows-' + cmd.id);
+      if (rowsEl) rowsEl.innerHTML = buildRowsHTML(rows, cmd.insight);
+    });
+
+    updateResult();
+  }
+
+  function updateResult() {
+    let grand = 0;
+    commanders.forEach(function(cmd) { grand += totalAP(cmd.insight); });
+
+    document.getElementById('resultPanel').style.display = commanders.length ? 'block' : 'none';
+    const el = document.getElementById('resultNumber');
+    el.textContent = grand;
+    el.style.transform = 'scale(1.07)';
+    setTimeout(function() { el.style.transform = 'scale(1)'; }, 200);
+
+    // Summary
+    if (!commanders.length) { document.getElementById('summaryWrap').innerHTML = ''; return; }
+
+    let html = '<table class="summary-table"><thead><tr>' +
+      '<th>Kommandant</th><th>Barbarer</th><th>Insight</th><th>AP</th>' +
+      '</tr></thead><tbody>';
+
+    commanders.forEach(function(cmd, idx) {
+      const ap = totalAP(cmd.insight);
+      html += '<tr>' +
+        '<td>Kommandant ' + (idx + 1) + '</td>' +
+        '<td>' + sharedBarbars + '</td>' +
+        '<td>' + (cmd.insight ? '<span class="check">✓</span>' : '<span class="cross">✕</span>') + '</td>' +
+        '<td>' + ap + '</td>' +
+        '</tr>';
+    });
+
+    if (commanders.length > 1) {
+      html += '<tr class="total-row"><td colspan="3">TOTALT</td><td>' + grand + '</td></tr>';
+    }
+
+    html += '</tbody></table>';
+    document.getElementById('summaryWrap').innerHTML = html;
+  }
+
+  function updateAddBtn() {
+    const btn = document.getElementById('addBtn');
+    btn.disabled = commanders.length >= MAX;
+    btn.textContent = commanders.length >= MAX
+      ? 'Maks antall kommandanter nådd (5)'
+      : '+ Legg til kommandant';
+  }
+
+  function toggleBreakdown(id) {
+    const body  = document.getElementById('rows-' + id);
+    const arrow = document.getElementById('arrow-' + id);
+    if (body)  body.classList.toggle('open');
+    if (arrow) arrow.classList.toggle('open');
+  }
+
+  function addCommander() {
+    if (commanders.length >= MAX) return;
+    commanders.push({ id: nextId++, insight: false });
+    render();
+  }
+
+  function removeCommander(id) {
+    commanders = commanders.filter(function(c) { return c.id !== id; });
+    render();
+  }
+
+  function toggleInsight(id) {
+    const cmd = commanders.find(function(c) { return c.id === id; });
+    if (!cmd) return;
+    cmd.insight = !cmd.insight;
+    const toggle = document.getElementById('toggle-' + id);
+    if (toggle) toggle.classList.toggle('active', cmd.insight);
+    updateDynamic();
+  }
+
+  // Init
+  addCommander();
+</script>
+</body>
+</html>
